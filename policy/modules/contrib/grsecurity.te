@@ -1,0 +1,133 @@
+policy_module(grsecurity, 1.00)
+
+
+gen_require(`
+	type init_t;
+	type kernel_t;
+	type sysctl_dev_t;
+	type sysctl_kernel_t;
+	type user_devpts_t;
+	type user_tty_device_t;
+')
+
+########################################
+#
+# Declarations
+#
+
+attribute gradm_domain;
+attribute gradm_load_domain;
+
+attribute grsec_policy_edit_domain;
+
+type grsec_device_t;
+files_type(grsec_device_t)
+
+type grsec_auth_t;
+files_auth_file(grsec_auth_t)
+
+gradm_load_template(init, initrc_t, system_r)
+
+type grsecurity_initrc_exec_t;
+init_script_file(grsecurity_initrc_exec_t)
+init_daemon_domain(init_gradm_t, gradm_exec_t)
+
+# Unless loading policy, gradm has
+# no business searching policy.
+#
+type grsec_policy_root_t;
+files_type(grsec_policy_root_t)
+
+type grsec_policy_t;
+files_security_file(grsec_policy_t)
+
+type gradm_exec_t;
+application_executable_file(gradm_exec_t)
+
+########################################
+#
+# Local policy
+#
+
+gradm_base_template(staff, staff_t, staff_r)
+gradm_load_template(sysadm, sysadm_t, sysadm_r)
+gradm_auth(sysadm)
+gradm_manage(sysadm)
+#
+# gradm can be used to transition to safer,
+# less privileged "special" roles.
+#
+gradm_base_template(user, user_t, user_r)
+
+########################################
+#
+# gradm_domain policy
+
+allow gradm_domain self : capability ipc_lock;
+
+allow gradm_domain grsec_device_t : chr_file { write open };
+
+allow gradm_domain { user_devpts_t user_tty_device_t } : chr_file { read write ioctl getattr append };
+
+########################################
+#
+# gradm_load_domain policy
+#
+
+allow gradm_load_domain self : capability { dac_read_search dac_override };
+#
+# Presumably required to raise nofile limit when building policy.
+#
+allow gradm_load_domain self : process setrlimit;
+
+domain_use_interactive_fds(gradm_load_domain)
+
+grsec_read_policy(gradm_load_domain)
+#
+# Apparently required.
+#
+allow gradm_load_domain grsec_auth_t : file { read open };
+files_read_etc_files(gradm_load_domain)
+
+kernel_read_system_state(gradm_load_domain)
+
+# To build rbac policy, gradm must be able to:
+#
+#	* getattr and search all dirs
+#		* list some dirs
+#	* getattr all files, blk_files, chr_files, fifo_files and sock_files
+#	* getattr and read all symlinks
+
+files_list_all(gradm_load_domain)
+dev_getattr_all_blk_files(gradm_load_domain)
+dev_getattr_all_chr_files(gradm_load_domain)
+files_getattr_all_files(gradm_load_domain)
+files_getattr_all_sockets(gradm_load_domain)
+files_read_all_symlinks(gradm_load_domain)
+#
+# the above interfaces are not what they appear to be...
+#
+allow gradm_load_domain grsec_device_t : chr_file getattr;
+init_getattr_initctl(gradm_load_domain)
+dev_getattr_mtrr_dev(gradm_load_domain)
+
+getattr_files_pattern(gradm_load_domain, init_t, init_t)
+
+getattr_files_pattern(gradm_load_domain, sysctl_dev_t, sysctl_dev_t)
+getattr_files_pattern(gradm_load_domain, sysctl_kernel_t, sysctl_kernel_t)
+kernel_search_vm_sysctl(gradm_load_domain)
+allow gradm_load_domain sysctl_vm_t : file getattr;
+
+########################################
+#
+# grsec_policy_edit_domain policy
+#
+
+grsec_manage_policy(grsec_policy_edit_domain)
+
+########################################
+#
+# kernel_t policy
+#
+
+filetrans_pattern(kernel_t, device_t, grsec_device_t, chr_file, "grsecurity")

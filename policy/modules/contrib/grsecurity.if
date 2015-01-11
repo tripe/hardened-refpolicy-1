@@ -1,0 +1,221 @@
+###############################
+## <summary>
+##	Read grsec policy.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain from which to read.
+##	</summary>
+## </param>
+
+interface(`grsec_read_policy',`
+
+	gen_require(`
+		type grsec_policy_root_t;
+		type grsec_policy_t;
+	')
+
+	files_search_etc($1)
+	list_dirs_pattern($1, grsec_policy_root_t, grsec_policy_t)
+	allow $1 grsec_policy_root_t : dir list_dir_perms;
+	allow $1 grsec_policy_t : file read_file_perms;
+')
+
+
+###############################
+## <summary>
+##	Manage grsec policy.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain from which to manage.
+##	</summary>
+## </param>
+
+interface(`grsec_manage_policy',`
+
+	gen_require(`
+		type grsec_policy_root_t;
+		type grsec_policy_t;
+	')
+
+	files_search_etc($1)
+	filetrans_pattern( $1, grsec_policy_root_t, grsec_policy_t, { dir file } )
+	manage_dirs_pattern( $1, { grsec_policy_root_t grsec_policy_t }, grsec_policy_t )
+	manage_files_pattern( $1, { grsec_policy_root_t grsec_policy_t }, grsec_policy_t )
+')
+
+
+###############################
+## <summary>
+##	<p>
+##	Authenticate to grsec roles.
+##	</p>
+##	<p>
+##	This interface is not required for 'N' roles.
+##	</p>
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Prefix of the gradm domain.
+##	</summary>
+## </param>
+
+interface(`gradm_auth',`
+
+	gen_require(`
+		type grsec_auth_t;
+	')
+
+	allow $1_gradm_t grsec_auth_t : file { read open };
+')
+
+
+###############################
+## <summary>
+##	Manage grsec roles.
+## </summary>
+## <param name="prefix">
+##	<summary>
+##	Prefix of the gradm domain.
+##	</summary>
+## </param>
+
+interface(`gradm_manage',`
+
+	gen_require(`
+		type $1_gradm_t;
+		type grsec_auth_t;
+		type grsec_policy_root_t;
+	')
+
+	filetrans_pattern( $1_gradm_t, grsec_policy_root_t, grsec_auth_t, file, "pw" )
+	create_files_pattern( $1_gradm_t, grsec_policy_root_t, grsec_auth_t )
+	allow $1_gradm_t grsec_auth_t : file rw_file_perms;
+')
+
+
+###############################
+## <summary>
+##	<p>
+##	Base template for gradm.
+##	</p>
+##	<p>
+##	This is sufficient to transition to 'N' roles.
+##	</p>
+## </summary>
+## <param name="prefix">
+##	<summary>
+##	Prefix for the gradm domain.
+##	</summary>
+## </param>
+## </param>
+## <param name="domain">
+##	<summary>
+##	Domain of the role from which gradm is execed.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role with which to assign types.
+##	</summary>
+## </param>
+
+template(`gradm_base_template',`
+
+	gen_require(`
+		attribute gradm_domain;
+		role $3;
+		type $2;
+		type gradm_exec_t;
+	')
+
+	########################################
+	#
+	# Declarations
+	#
+
+	type $1_gradm_t, gradm_domain;
+	application_domain($1_gradm_t, gradm_exec_t)
+
+	role $3 types $1_gradm_t;
+
+	########################################
+	#
+	# Local policy
+	#
+
+	domtrans_pattern($2, gradm_exec_t, $1_gradm_t)
+')
+
+
+###############################
+## <summary>
+##	<p>
+##		An authorizing gradm template.
+##	</p>
+##	<p>
+##		This allows for transitioning to roles which require passwords.
+##	</p>
+## </summary>
+## <param name="prefix">
+##	<summary>
+##	Prefix for the gradm domain.
+##	</summary>
+## </param>
+## </param>
+## <param name="domain">
+##	<summary>
+##	Domain of the role from which gradm is execed.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role with which to assign private types.
+##	</summary>
+## </param>
+
+template(`gradm_auth_template',`
+
+	gradm_base_template($1, $2, $3)
+
+	gradm_auth($1)
+')
+
+
+###############################
+## <summary>
+##	An enable/disable/reload template for gradm.
+## </summary>
+## <param name="prefix">
+##	<summary>
+##	Prefix for the gradm domain.
+##	</summary>
+## </param>
+## </param>
+## <param name="domain">
+##	<summary>
+##	Domain of the role from which gradm is execed.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role with which to assign private types.
+##	</summary>
+## </param>
+
+template(`gradm_load_template',`
+
+	gen_require(`
+		attribute gradm_load_domain;
+	')
+
+	gradm_base_template($1, $2, $3)
+
+	########################################
+	#
+	# Declarations
+	#
+
+	typeattribute $1_gradm_t gradm_load_domain;
+')

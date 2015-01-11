@@ -1,0 +1,9 @@
+/dev/grsec				gen_context(system_u:object_r:grsec_device_t,s0)
+
+/etc/grsec			-d	gen_context(system_u:object_r:grsec_policy_root_t,s0)
+/etc/grsec/pw			--	gen_context(system_u:object_r:grsec_auth_t,s0)
+/etc/grsec/.*				gen_context(system_u:object_r:grsec_policy_t,mls_systemhigh)
+
+/etc/rc\.d/init\.d/grsecurity	--	gen_context(system_u:object_r:grsecurity_initrc_exec_t,s0)
+
+/sbin/gradm			--	gen_context(system_u:object_r:gradm_exec_t,s0)
