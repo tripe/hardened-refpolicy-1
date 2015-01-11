@@ -1,0 +1,49 @@
+## <summary>slock policy</summary>
+## <desc>
+##	<p>
+##		Policy for slock.
+##	</p>
+## </desc>
+
+
+###############################
+## <summary>
+##	Transition to slock.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain from which to transition.
+##	</summary>
+## </param>
+
+interface(`slock_domtrans',`
+
+	gen_require(`
+		type slock_t;
+		type slock_exec_t;
+	')
+
+	domtrans_pattern($1, slock_exec_t, slock_t)
+')
+
+
+###############################
+## <summary>
+##	Allow role to exec slock.
+## </summary>
+## <param name="role">
+##	<summary>
+##	Role for which to assign types.
+##	</summary>
+## </param>
+
+interface(`slock_role',`
+
+	gen_require(`
+		type slock_t;
+	')
+
+	slock_domtrans($1)
+
+	role $2 types slock_t;
+')
