@@ -202,6 +202,10 @@ ifdef(`distro_gentoo',`
 	')
 
 	optional_policy(`
+		gradm_base_template(user, user_t, user_r)
+	')
+
+	optional_policy(`
 		links_role(user_r, user_t)
 	')
 

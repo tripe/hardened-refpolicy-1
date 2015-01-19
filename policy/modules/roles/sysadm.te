@@ -518,6 +518,12 @@ ifdef(`distro_gentoo',`
 	')
 
 	optional_policy(`
+		gradm_load_template(sysadm, sysadm_t, sysadm_r)
+		gradm_auth(sysadm)
+		gradm_manage(sysadm)
+	')
+
+	optional_policy(`
 		mutt_role(sysadm_r, sysadm_t)
 	')
 

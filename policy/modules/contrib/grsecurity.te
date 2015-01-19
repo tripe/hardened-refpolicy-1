@@ -46,21 +46,6 @@ application_executable_file(gradm_exec_t)
 
 ########################################
 #
-# Local policy
-#
-
-gradm_base_template(staff, staff_t, staff_r)
-gradm_load_template(sysadm, sysadm_t, sysadm_r)
-gradm_auth(sysadm)
-gradm_manage(sysadm)
-#
-# gradm can be used to transition to safer,
-# less privileged "special" roles.
-#
-gradm_base_template(user, user_t, user_r)
-
-########################################
-#
 # gradm_domain policy
 
 allow gradm_domain self : capability ipc_lock;
