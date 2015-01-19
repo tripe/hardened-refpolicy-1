@@ -222,6 +222,10 @@ ifdef(`distro_gentoo',`
 	')
 
 	optional_policy(`
+		slock_role(user_t, user_r)
+	')
+
+	optional_policy(`
 		skype_role(user_r, user_t)
 	')
 

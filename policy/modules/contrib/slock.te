@@ -2,11 +2,6 @@ policy_module(slock, 1.00)
 
 
 gen_require(`
-	role staff_r;
-	role user_r;
-
-	type staff_t;
-	type user_t;
 	type usr_t;
 ')
 
@@ -24,9 +19,6 @@ userdom_user_application_domain(slock_t, slock_exec_t)
 #
 # Local policy
 #
-
-slock_role(staff_t, staff_r)
-slock_role(user_t, user_r)
 
 allow slock_t self : capability dac_read_search;
 
